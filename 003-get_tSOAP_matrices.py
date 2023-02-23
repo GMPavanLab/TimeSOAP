@@ -11,10 +11,10 @@ import sys
 from scipy.optimize import curve_fit
 from operator import itemgetter
 
-nframes = 1
+nframes = 1  # nof consecutive frames
 
-# 1. read interface df from hdf5
-os.chdir('Lipids')
+# 1. read SOAPified trajectory df from hdf5
+os.chdir('Water')
 
 # --------------------------------------------------------#
 # with h5py.File('211_600.hdf5', 'r') as f:
@@ -24,18 +24,24 @@ os.chdir('Lipids')
 #     X = f["SOAP/211_600"][:][:, mask]
 # ---------------------------------------------------------#
 
-with h5py.File('martini22_293Ksoap.hdf5', 'r') as f:
-    X = f["/SOAP/martini22_293K"][5000:10001, :, :]
+# LIPIDS
+# with h5py.File('martini22_293Ksoap.hdf5', 'r') as f:
+#     X = f["/SOAP/martini22_293K"][5000:10001, :, :]
+
+# ICE/WATER
+with h5py.File('ice_watersoap.hdf5', 'r') as f:
+    X = f["/SOAP/ice_water"][:, :, :]
 
 X = SOAPify.fillSOAPVectorFromdscribe(
-        X[:], l_max=8, n_max=8, atomTypes=["P"], atomicSlices={'PP': slice(0, 324, None)})
+        X[:], l_max=8, n_max=8, atomTypes=["H", "O"], atomicSlices={'HH': slice(0, 324, None), 'HO': slice(324, 900, None), 'OH': slice(324, 900, None), 'OO': slice(900, 1224, None)})
 #
 # # WATER: atomTypes=["H", "O"], atomicSlices={'HH': slice(0, 324, None), 'HO': slice(324, 900, None), 'OH': slice(324, 900, None), 'OO': slice(900, 1224, None)
 # # METALS: atomTypes=["Cu"], atomicSlices={'CuCu': slice(0, 324, None)}
 ## BTAw: atomTypes=["N"], atomicSlices={'NN': slice(0, 324, None)}
 ## ICO: atomTypes=["Au"], atomicSlices={'AuAu': slice(0, 324, None)}
+# LIPIDS: atomTypes=["P"], atomicSlices={'PP': slice(0, 324, None)}
 print(X.shape)
-np.savez('X_martini22_293K.npz', name1=X)  # save dataset for COEXISTENCE
+np.savez('ice_water.npz', name1=X)  # save dataset for COEXISTENCE
 
 
 X = SOAPify.normalizeArray(X)
@@ -57,11 +63,13 @@ np.savez('X_normalized.npz', name1=X)  # save dataset for COEXISTENCE
 #
 # np.savez('norm_SOAP.npz', name1=norm_SOAP)
 # os.chdir('../')
-os.chdir('1frame')
-# 3. time dSOAP (SOAP distance from frame t+1 and frame t-1)
+# os.chdir('1frame')
+
+
+# 3. Get tSOAP (SOAP distance from frame t+1 and frame t-1)
 # os.mkdir('dSOAP_1ns')
 # os.chdir('dSOAP_1ns')
-# os.mkdir('dSOAP')
+os.mkdir('dSOAP')
 os.chdir('dSOAP')
 
 # DERIVATA IN AVANTI
@@ -77,8 +85,8 @@ np.savez('time_dSOAP.npz', name1=time_dSOAP)
 # time_dSOAP = np.load('dSOAP/time_dSOAP.npz')['name1']
 os.chdir('../')
 
-# 4. time VARIATION dSOAP
-# os.mkdir('delta_dSOAP')
+# 4. time VARIATION tSOAP
+os.mkdir('delta_dSOAP')
 os.chdir('delta_dSOAP')
 
 # delta_time_dSOAP = np.zeros((time_dSOAP.shape[0]-1, time_dSOAP.shape[1]))
